@@ -249,7 +249,7 @@ This module is the AI inference backbone of the [THOR autorecon framework](https
 ## Whitepaper
 
 Full technical documentation including performance benchmarks and design rationale:  
-📄 [`docs/whitepaper.pdf`](docs/whitepaper.pdf)
+📄 [`Docs/whitepaper.pdf`](Docs/whitepaper.pdf)
 
 ---
 
