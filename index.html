@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>llm-asymmetric-router — THOR Project</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&family=JetBrains+Mono:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #060a12;
+  --bg2:      #0a0f1e;
+  --bg3:      #0d1428;
+  --cyan:     #00c8e0;
+  --cyan2:    #00e5ff;
+  --green:    #00e07a;
+  --purple:   #7c6fef;
+  --red:      #ff4560;
+  --gray:     #8090a8;
+  --gray2:    #4a5568;
+  --white:    #e8edf5;
+  --border:   rgba(0,200,224,0.18);
+  --glow:     0 0 20px rgba(0,200,224,0.3);
+  --glow2:    0 0 40px rgba(0,200,224,0.15);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* ── SCANLINES OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.08) 2px,
+    rgba(0,0,0,0.08) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ── GRID BACKGROUND ── */
+.grid-bg {
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(0,200,224,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,200,224,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 40px;
+  height: 60px;
+  background: rgba(6,10,18,0.92);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+}
+
+.nav-logo {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  color: var(--cyan);
+  letter-spacing: 2px;
+  text-decoration: none;
+}
+.nav-logo span { color: var(--gray); }
+
+.nav-links { display: flex; gap: 32px; }
+.nav-links a {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--gray);
+  text-decoration: none;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--cyan); }
+
+.nav-gh {
+  display: flex; align-items: center; gap: 8px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  color: var(--bg);
+  background: var(--cyan);
+  padding: 6px 16px;
+  text-decoration: none;
+  clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.nav-gh:hover { background: var(--cyan2); box-shadow: var(--glow); }
+
+/* ── HERO ── */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 100px 40px 60px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.hero-orb {
+  position: absolute;
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,200,224,0.06) 0%, transparent 70%);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  animation: pulse 4s ease-in-out infinite;
+}
+.hero-orb2 {
+  position: absolute;
+  width: 300px; height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,224,122,0.05) 0%, transparent 70%);
+  top: 30%; left: 20%;
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes pulse { 0%,100%{opacity:0.5;transform:translate(-50%,-50%) scale(1)} 50%{opacity:1;transform:translate(-50%,-50%) scale(1.05)} }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
+
+.badge-row {
+  display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+  margin-bottom: 32px;
+  animation: fadeUp 0.6s ease both;
+}
+
+.badge {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  padding: 4px 10px;
+  border: 1px solid;
+  letter-spacing: 1px;
+  clip-path: polygon(4px 0%, 100% 0%, calc(100% - 4px) 100%, 0% 100%);
+}
+.badge-cyan  { border-color: var(--cyan);   color: var(--cyan);   background: rgba(0,200,224,0.07); }
+.badge-green { border-color: var(--green);  color: var(--green);  background: rgba(0,224,122,0.07); }
+.badge-gray  { border-color: var(--gray2);  color: var(--gray);   background: rgba(74,85,104,0.2);  }
+
+.hero-tag {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--cyan);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  animation: fadeUp 0.7s ease both;
+}
+
+h1 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(42px, 7vw, 88px);
+  font-weight: 700;
+  line-height: 1.0;
+  letter-spacing: -1px;
+  margin-bottom: 12px;
+  animation: fadeUp 0.8s ease both;
+}
+h1 .accent { color: var(--cyan); text-shadow: 0 0 30px rgba(0,200,224,0.5); }
+h1 .dim    { color: var(--gray2); font-weight: 300; }
+
+.hero-sub {
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--gray);
+  max-width: 600px;
+  margin: 0 auto 40px;
+  animation: fadeUp 0.9s ease both;
+}
+
+.hero-cta {
+  display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+  animation: fadeUp 1s ease both;
+}
+
+.btn {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 14px 32px;
+  text-decoration: none;
+  transition: all 0.2s;
+  clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+}
+.btn-primary {
+  background: var(--cyan);
+  color: var(--bg);
+}
+.btn-primary:hover { background: var(--cyan2); box-shadow: var(--glow); transform: translateY(-2px); }
+.btn-outline {
+  background: transparent;
+  color: var(--cyan);
+  border: 1px solid var(--cyan);
+}
+.btn-outline:hover { background: rgba(0,200,224,0.1); box-shadow: var(--glow); transform: translateY(-2px); }
+
+.hero-stats {
+  display: flex; gap: 48px; margin-top: 72px;
+  animation: fadeUp 1.1s ease both;
+}
+.stat { text-align: center; }
+.stat-val {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 32px;
+  color: var(--cyan);
+  display: block;
+  text-shadow: 0 0 20px rgba(0,200,224,0.4);
+}
+.stat-lbl {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── SECTIONS ── */
+section {
+  position: relative;
+  z-index: 1;
+  padding: 100px 40px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.section-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: var(--cyan);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 12px;
+}
+.section-label::after {
+  content: '';
+  flex: 1; max-width: 60px;
+  height: 1px;
+  background: var(--cyan);
+  opacity: 0.4;
+}
+
+h2 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 20px;
+}
+h2 .cx { color: var(--cyan); }
+
+.divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyan) 30%, var(--cyan) 70%, transparent);
+  opacity: 0.15;
+  margin: 0 auto;
+}
+
+/* ── ARCHITECTURE SECTION ── */
+.arch-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 48px;
+}
+
+.arch-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.arch-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--cyan);
+}
+.arch-card:hover {
+  border-color: rgba(0,200,224,0.4);
+  box-shadow: var(--glow2);
+}
+.arch-card.green::before { background: var(--green); }
+.arch-card.green { border-color: rgba(0,224,122,0.18); }
+.arch-card.green:hover { border-color: rgba(0,224,122,0.4); box-shadow: 0 0 40px rgba(0,224,122,0.1); }
+
+.arch-card-num {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--gray2);
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+.arch-card h3 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--cyan);
+  margin-bottom: 6px;
+  letter-spacing: 1px;
+}
+.arch-card.green h3 { color: var(--green); }
+.arch-card p { color: var(--gray); font-size: 15px; margin-bottom: 20px; }
+
+.kv-list { list-style: none; }
+.kv-list li {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 13px;
+}
+.kv-list li:last-child { border-bottom: none; }
+.kv-key { color: var(--gray); font-family: 'Share Tech Mono', monospace; font-size: 11px; }
+.kv-val { color: var(--white); font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+.kv-val.cx { color: var(--cyan); }
+.kv-val.gn { color: var(--green); }
+
+/* ── ROUTER SECTION ── */
+.router-flow {
+  display: grid;
+  grid-template-columns: 1fr 32px 1fr 32px 1fr;
+  align-items: center;
+  gap: 0;
+  margin-top: 48px;
+}
+
+.flow-box {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  padding: 24px 20px;
+  text-align: center;
+  position: relative;
+}
+.flow-box h4 {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--cyan);
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.flow-box p { font-size: 13px; color: var(--gray); line-height: 1.5; }
+
+.flow-arrow {
+  text-align: center;
+  color: var(--cyan);
+  font-size: 20px;
+}
+
+/* ROUTING TABLE */
+.route-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 32px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+.route-table thead tr {
+  background: rgba(0,200,224,0.1);
+  border-bottom: 1px solid var(--cyan);
+}
+.route-table th {
+  padding: 12px 16px;
+  text-align: left;
+  color: var(--cyan);
+  letter-spacing: 1.5px;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+.route-table tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.15s;
+}
+.route-table tbody tr:hover { background: rgba(0,200,224,0.04); }
+.route-table td { padding: 12px 16px; color: var(--gray); }
+.route-table td:first-child { color: var(--white); }
+.tag-cpu  { color: var(--green);  background: rgba(0,224,122,0.1);  padding: 3px 8px; font-size: 10px; }
+.tag-gpu  { color: var(--cyan);   background: rgba(0,200,224,0.1);  padding: 3px 8px; font-size: 10px; }
+
+/* ── CODE BLOCK ── */
+.code-wrap {
+  background: #040810;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--cyan);
+  margin-top: 24px;
+  overflow-x: auto;
+}
+.code-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px;
+  background: rgba(0,200,224,0.05);
+  border-bottom: 1px solid var(--border);
+}
+.code-lang {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--cyan);
+  letter-spacing: 2px;
+}
+.code-dots { display: flex; gap: 6px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; }
+.d1{background:#ff4560} .d2{background:#f7b731} .d3{background:#00e07a}
+
+pre {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  padding: 20px 24px;
+  color: #c9d1d9;
+  overflow-x: auto;
+}
+.kw   { color: #ff7b72; }
+.str  { color: #a5d6ff; }
+.cmt  { color: #8b949e; font-style: italic; }
+.fn   { color: #d2a8ff; }
+.num  { color: #79c0ff; }
+.cx   { color: #00c8e0; }
+
+/* ── PERFORMANCE ── */
+.perf-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 48px;
+}
+
+.perf-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  padding: 28px 24px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.perf-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  opacity: 0.4;
+}
+.perf-num {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 36px;
+  color: var(--cyan);
+  display: block;
+  text-shadow: 0 0 20px rgba(0,200,224,0.3);
+  margin-bottom: 4px;
+}
+.perf-num.gn { color: var(--green); text-shadow: 0 0 20px rgba(0,224,122,0.3); }
+.perf-desc { font-size: 13px; color: var(--gray); }
+.perf-sub  { font-size: 11px; color: var(--gray2); margin-top: 4px; }
+
+/* ── HARDWARE ── */
+.hw-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 48px;
+}
+
+.hw-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  padding: 20px;
+  text-align: center;
+}
+.hw-card .hw-gpu { font-family: 'Share Tech Mono', monospace; font-size: 13px; color: var(--white); margin-bottom: 4px; }
+.hw-card .hw-vram { font-size: 11px; color: var(--cyan); }
+.hw-card .hw-ok { font-size: 11px; color: var(--green); margin-top: 8px; }
+
+/* ── QUICK START ── */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-top: 48px;
+}
+
+.step {
+  display: flex; gap: 20px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  padding: 24px;
+}
+.step-num {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 28px;
+  color: var(--bg2);
+  background: var(--cyan);
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+}
+.step-body h4 { font-size: 16px; font-weight: 700; color: var(--white); margin-bottom: 4px; }
+.step-body p  { font-size: 13px; color: var(--gray); }
+
+/* ── FOOTER ── */
+footer {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid var(--border);
+  padding: 40px;
+  text-align: center;
+}
+footer .f-logo {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 16px;
+  color: var(--cyan);
+  margin-bottom: 8px;
+}
+footer p { font-size: 13px; color: var(--gray2); }
+footer a { color: var(--cyan); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+
+/* ── TERMINAL ANIM ── */
+.terminal {
+  background: #040810;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--green);
+  padding: 20px 24px;
+  margin-top: 32px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.t-line { display: flex; gap: 8px; }
+.t-prompt { color: var(--green); }
+.t-cmd    { color: var(--white); }
+.t-out    { color: var(--gray);  padding-left: 16px; }
+.t-route-gpu { color: var(--cyan); padding-left: 16px; }
+.t-route-cpu { color: var(--green); padding-left: 16px; }
+
+/* ── SCROLL REVEAL ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  nav { padding: 0 20px; }
+  .nav-links { display: none; }
+  section { padding: 60px 20px; }
+  .arch-grid  { grid-template-columns: 1fr; }
+  .perf-grid  { grid-template-columns: 1fr 1fr; }
+  .hw-grid    { grid-template-columns: 1fr 1fr; }
+  .steps      { grid-template-columns: 1fr; }
+  .router-flow { grid-template-columns: 1fr; }
+  .flow-arrow { transform: rotate(90deg); }
+  .hero-stats { gap: 24px; flex-wrap: wrap; justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">llm-<span>asymmetric-</span>router</a>
+  <div class="nav-links">
+    <a href="#architecture">Architecture</a>
+    <a href="#router">Router</a>
+    <a href="#performance">Performance</a>
+    <a href="#quickstart">Quick Start</a>
+    <a href="#hardware">Hardware</a>
+  </div>
+  <a href="https://github.com/ivandiaztnd/llm-asymmetric-router" class="nav-gh" target="_blank">★ GitHub</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-orb"></div>
+  <div class="hero-orb2"></div>
+
+  <div class="badge-row">
+    <span class="badge badge-cyan">MIT License</span>
+    <span class="badge badge-cyan">Python 3.10+</span>
+    <span class="badge badge-green">Ollama Backend</span>
+    <span class="badge badge-green">Vulkan Ready</span>
+    <span class="badge badge-gray">THOR Project</span>
+    <span class="badge badge-gray">v1.0.0 — April 2026</span>
+  </div>
+
+  <div class="hero-tag">// THOR Project — ivandiaztnd</div>
+
+  <h1>
+    LLM <span class="accent">Asymmetric</span><br>
+    <span class="dim">Router</span>
+  </h1>
+
+  <p class="hero-sub">
+    Heterogeneous LLM inference with dynamic load balancing on edge hardware.
+    GPU node for low-latency interaction. CPU node for high-context batch processing.
+    Zero cloud dependency.
+  </p>
+
+  <div class="hero-cta">
+    <a href="#quickstart" class="btn btn-primary">→ Quick Start</a>
+    <a href="docs/whitepaper.pdf" class="btn btn-outline">📄 Whitepaper</a>
+    <a href="https://github.com/ivandiaztnd/llm-asymmetric-router" class="btn btn-outline">★ Star on GitHub</a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat">
+      <span class="stat-val">&lt;1ms</span>
+      <span class="stat-lbl">Routing Overhead</span>
+    </div>
+    <div class="stat">
+      <span class="stat-val">2x</span>
+      <span class="stat-lbl">Concurrent Workloads</span>
+    </div>
+    <div class="stat">
+      <span class="stat-val">0%</span>
+      <span class="stat-lbl">Cloud Dependency</span>
+    </div>
+    <div class="stat">
+      <span class="stat-val">4GB</span>
+      <span class="stat-lbl">Min VRAM</span>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ARCHITECTURE -->
+<section id="architecture">
+  <div class="section-label">01 — Architecture</div>
+  <h2>The <span class="cx">Dual-Node</span> Nexus</h2>
+  <p style="color:var(--gray);max-width:640px">
+    Two dedicated Ollama instances, each tuned for a distinct workload class.
+    A Python orchestrator intercepts every prompt and routes it before a single token is generated.
+  </p>
+
+  <div class="arch-grid reveal">
+    <div class="arch-card">
+      <div class="arch-card-num">NODE // ALPHA</div>
+      <h3>⚡ GPU — Interactive</h3>
+      <p>Low-latency inference for real-time operator interaction, strategy, and Q&A.</p>
+      <ul class="kv-list">
+        <li><span class="kv-key">backend</span><span class="kv-val cx">Ollama + Vulkan</span></li>
+        <li><span class="kv-key">port</span><span class="kv-val">11434</span></li>
+        <li><span class="kv-key">context</span><span class="kv-val">2048 tokens</span></li>
+        <li><span class="kv-key">model</span><span class="kv-val">Gemma 2:2b Q4_K_M</span></li>
+        <li><span class="kv-key">optimised for</span><span class="kv-val cx">TTFT &lt; 300ms</span></li>
+      </ul>
+    </div>
+
+    <div class="arch-card green">
+      <div class="arch-card-num">NODE // BETA</div>
+      <h3>🧠 CPU — Batch</h3>
+      <p>High-context processing for logs, scan results, CVE correlation, SmartChunking.</p>
+      <ul class="kv-list">
+        <li><span class="kv-key">backend</span><span class="kv-val gn">Ollama CPU (llama.cpp)</span></li>
+        <li><span class="kv-key">port</span><span class="kv-val">11435</span></li>
+        <li><span class="kv-key">context</span><span class="kv-val">4096+ tokens</span></li>
+        <li><span class="kv-key">model</span><span class="kv-val">Gemma 2:2b Q4_K_M</span></li>
+        <li><span class="kv-key">optimised for</span><span class="kv-val gn">Throughput / large ctx</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ASCII diagram -->
+  <div class="code-wrap reveal" style="margin-top:32px">
+    <div class="code-header">
+      <span class="code-lang">ARCHITECTURE DIAGRAM</span>
+      <div class="code-dots"><div class="dot d1"></div><div class="dot d2"></div><div class="dot d3"></div></div>
+    </div>
+<pre>
+┌────────────────────────────────────────────────────────────┐
+│                      OPERATOR PROMPT                        │
+└───────────────────────────┬────────────────────────────────┘
+                            │
+                  ┌─────────▼──────────┐
+                  │  Heuristic Router  │  ← semantic classifier
+                  │  + Load Monitor    │  ← VRAM / TTFT polling
+                  └────┬──────────┬────┘
+                       │          │
+       ┌───────────────▼──┐  ┌────▼────────────────┐
+       │   NODE ALPHA      │  │     NODE BETA        │
+       │   GPU / Vulkan    │  │     CPU / llama.cpp  │
+       │   port :11434     │  │     port :11435      │
+       │   ctx  2048 tok   │  │     ctx  4096+ tok   │
+       │   ⚡ Low Latency  │  │     🧠 High Context  │
+       └───────────────────┘  └──────────┬───────────┘
+                                         │
+                               ┌─────────▼──────────┐
+                               │   Qdrant VectorDB   │
+                               │   port :6333        │
+                               │   Session RAG / mem │
+                               └─────────────────────┘
+</pre>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ROUTER -->
+<section id="router">
+  <div class="section-label">02 — Router Design</div>
+  <h2>Two-Stage <span class="cx">Decision</span> Pipeline</h2>
+  <p style="color:var(--gray);max-width:640px">
+    The router operates synchronously before inference. Every prompt passes through
+    two stages before a node endpoint is selected.
+  </p>
+
+  <div class="router-flow reveal">
+    <div class="flow-box">
+      <h4>Stage 1</h4>
+      <p><strong style="color:var(--white)">Load Monitor</strong><br>
+      Poll VRAM via rocm-smi.<br>
+      VRAM &gt; 90% or TTFT &gt; 800ms → force CPU route</p>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">
+      <h4>Stage 2</h4>
+      <p><strong style="color:var(--white)">Semantic Classifier</strong><br>
+      Pattern-match against configurable JSON ruleset.<br>
+      Weighted scoring: multiple matches per class.</p>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">
+      <h4>Dispatch</h4>
+      <p><strong style="color:var(--white)">Node Endpoint</strong><br>
+      Async HTTP call via httpx.<br>
+      Auto-fallback if node unreachable.</p>
+    </div>
+  </div>
+
+  <table class="route-table reveal">
+    <thead>
+      <tr>
+        <th>Trigger Keywords</th>
+        <th>Route</th>
+        <th>Rationale</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>DEBUG · LOG · SCAN_RESULT · NMAP · NUCLEI · CVE-*</td>
+        <td><span class="tag-cpu">CPU — Beta</span></td>
+        <td>High token count, latency-tolerant</td>
+      </tr>
+      <tr>
+        <td>EXPLOIT · STRATEGY · QUESTION · EXPLAIN · ANALYZE</td>
+        <td><span class="tag-gpu">GPU — Alpha</span></td>
+        <td>Low token count, latency-critical</td>
+      </tr>
+      <tr>
+        <td>CHUNK · SUMMARIZE · COMPRESS · BATCH</td>
+        <td><span class="tag-cpu">CPU — Beta</span></td>
+        <td>Batch semantics, large context</td>
+      </tr>
+      <tr>
+        <td><em style="color:var(--gray2)">No match + prompt &gt; 800 tokens</em></td>
+        <td><span class="tag-cpu">CPU — Beta</span></td>
+        <td>Length-based fallback</td>
+      </tr>
+      <tr>
+        <td><em style="color:var(--gray2)">No match + prompt ≤ 200 tokens</em></td>
+        <td><span class="tag-gpu">GPU — Alpha</span></td>
+        <td>Short prompt default</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Code example -->
+  <div class="code-wrap reveal">
+    <div class="code-header">
+      <span class="code-lang">Python — router usage</span>
+      <div class="code-dots"><div class="dot d1"></div><div class="dot d2"></div><div class="dot d3"></div></div>
+    </div>
+<pre><span class="kw">from</span> <span class="cx">router</span> <span class="kw">import</span> AsymmetricRouter, NodeConfig, RouterConfig
+<span class="kw">import</span> asyncio
+
+<span class="cmt"># Configure nodes</span>
+alpha = <span class="fn">NodeConfig</span>(endpoint=<span class="str">"http://localhost:11434"</span>, model=<span class="str">"gemma2:2b"</span>, context_window=<span class="num">2048</span>)
+beta  = <span class="fn">NodeConfig</span>(endpoint=<span class="str">"http://localhost:11435"</span>, model=<span class="str">"gemma2:2b"</span>, context_window=<span class="num">4096</span>, backend=<span class="str">"cpu"</span>)
+cfg   = <span class="fn">RouterConfig</span>(vram_threshold=<span class="num">0.90</span>, ttft_threshold_ms=<span class="num">800</span>)
+
+router = <span class="fn">AsymmetricRouter</span>(alpha, beta, cfg)
+
+<span class="kw">async def</span> <span class="fn">main</span>():
+    <span class="cmt"># Auto-routed to GPU — short interactive prompt</span>
+    r1 = <span class="kw">await</span> router.<span class="fn">dispatch</span>(<span class="str">"Explain CVE-2024-1234 exploitation vector"</span>)
+
+    <span class="cmt"># Auto-routed to CPU — large log batch</span>
+    r2 = <span class="kw">await</span> router.<span class="fn">dispatch</span>(<span class="str">"SCAN_RESULT: [10K token Nmap output]"</span>)
+
+    <span class="fn">print</span>(router.<span class="fn">stats</span>())
+    <span class="cmt"># {'total_requests': 2, 'alpha_requests': 1, 'beta_requests': 1, 'avg_ttft_ms': 287.4}</span>
+
+asyncio.<span class="fn">run</span>(<span class="fn">main</span>())</pre>
+  </div>
+
+  <!-- Terminal demo -->
+  <div class="terminal reveal">
+    <div class="t-line"><span class="t-prompt">$</span><span class="t-cmd"> python -m router --demo</span></div>
+    <div class="t-line"><span class="t-out">[ROUTER] Initializing dual-node inference engine...</span></div>
+    <div class="t-line"><span class="t-out">[ROUTER] Node Alpha (GPU/Vulkan) → http://localhost:11434 ✓</span></div>
+    <div class="t-line"><span class="t-out">[ROUTER] Node Beta  (CPU)        → http://localhost:11435 ✓</span></div>
+    <div class="t-line"><span class="t-out">[ROUTER] Qdrant VectorDB         → http://localhost:6333  ✓</span></div>
+    <div class="t-line" style="margin-top:8px"><span class="t-out">─────────────────────────────────────────────────────────</span></div>
+    <div class="t-route-gpu">[ALPHA] semantic:gpu_score=2&gt;cpu_score=0  | "Explain CVE-2024-1234..."</div>
+    <div class="t-route-cpu">[BETA ] semantic:cpu_score=3&gt;gpu_score=0  | "SCAN_RESULT: Nmap output..."</div>
+    <div class="t-route-cpu">[BETA ] load_monitor:vram_overload→cpu    | "What is the attack surface..."</div>
+    <div class="t-route-gpu">[ALPHA] semantic:gpu_score=1&gt;cpu_score=0  | "STRATEGY: lateral movement..."</div>
+    <div class="t-line" style="margin-top:8px"><span class="t-out">Stats: total=4 | alpha=2 | beta=2 | force_reroutes=1 | avg_ttft=291ms</span></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PERFORMANCE -->
+<section id="performance">
+  <div class="section-label">03 — Performance</div>
+  <h2>Benchmark <span class="cx">Results</span></h2>
+  <p style="color:var(--gray);max-width:640px;margin-bottom:0">
+    Tested on RX 5700 (8 GB VRAM) + Ryzen 5 6C/12T + 32 GB DDR4 · Gemma 2:2b Q4_K_M
+  </p>
+
+  <div class="perf-grid reveal">
+    <div class="perf-card">
+      <span class="perf-num">&lt;1ms</span>
+      <div class="perf-desc">Routing Decision Overhead</div>
+      <div class="perf-sub">semantic classification + load check</div>
+    </div>
+    <div class="perf-card">
+      <span class="perf-num">290ms</span>
+      <div class="perf-desc">Interactive TTFT (avg)</div>
+      <div class="perf-sub">vs 320ms single-node baseline</div>
+    </div>
+    <div class="perf-card">
+      <span class="perf-num gn">0</span>
+      <div class="perf-desc">Interactive Stalls During Batch</div>
+      <div class="perf-sub">vs complete blocking in single-node</div>
+    </div>
+    <div class="perf-card">
+      <span class="perf-num gn">71%</span>
+      <div class="perf-desc">Peak VRAM Utilisation</div>
+      <div class="perf-sub">vs 94% single-node (Alpha node only)</div>
+    </div>
+    <div class="perf-card">
+      <span class="perf-num">2x</span>
+      <div class="perf-desc">Concurrent Workload Capacity</div>
+      <div class="perf-sub">fully independent pipelines</div>
+    </div>
+    <div class="perf-card">
+      <span class="perf-num gn">0</span>
+      <div class="perf-desc">PCIe Saturation Events</div>
+      <div class="perf-sub">vs frequent on single-node config</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- QUICK START -->
+<section id="quickstart">
+  <div class="section-label">04 — Quick Start</div>
+  <h2>Up and Running in <span class="cx">5 Minutes</span></h2>
+
+  <div class="steps reveal">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-body">
+        <h4>Clone & Install</h4>
+        <p>Clone the repo and install Python dependencies via pip.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-body">
+        <h4>Pull Model</h4>
+        <p>Pull Gemma 2:2b (or any compatible 2–7B model) via Ollama.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-body">
+        <h4>Launch Nodes</h4>
+        <p>Start two Ollama instances on ports 11434 (GPU) and 11435 (CPU).</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-body">
+        <h4>Configure & Route</h4>
+        <p>Edit config.yaml, import AsymmetricRouter, call dispatch().</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-wrap reveal">
+    <div class="code-header">
+      <span class="code-lang">bash — full setup</span>
+      <div class="code-dots"><div class="dot d1"></div><div class="dot d2"></div><div class="dot d3"></div></div>
+    </div>
+<pre><span class="cmt"># 1. Clone</span>
+git clone https://github.com/ivandiaztnd/llm-asymmetric-router
+cd llm-asymmetric-router
+pip install -r requirements.txt
+
+<span class="cmt"># 2. Pull model</span>
+ollama pull gemma2:2b
+
+<span class="cmt"># 3. Node Alpha — GPU/Vulkan on port 11434</span>
+OLLAMA_HOST=0.0.0.0:11434 ollama serve &
+
+<span class="cmt"># 4. Node Beta — CPU only on port 11435</span>
+OLLAMA_HOST=0.0.0.0:11435 CUDA_VISIBLE_DEVICES=<span class="str">""</span> ollama serve &
+
+<span class="cmt"># 5. Optional: Qdrant for persistent RAG</span>
+docker run -d -p 6333:6333 qdrant/qdrant
+
+<span class="cmt"># 6. Run demo</span>
+python -m router --demo</pre>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- HARDWARE -->
+<section id="hardware">
+  <div class="section-label">05 — Hardware</div>
+  <h2>Tested <span class="cx">Hardware</span></h2>
+  <p style="color:var(--gray);max-width:640px;margin-bottom:0">
+    Designed for consumer hardware. ROCm on Windows with Polaris/RDNA1 is unstable —
+    <strong style="color:var(--cyan)">Vulkan is the recommended backend for all AMD cards on Windows.</strong>
+  </p>
+
+  <div class="hw-grid reveal">
+    <div class="hw-card">
+      <div class="hw-gpu">AMD RX 5700</div>
+      <div class="hw-vram">8 GB VRAM</div>
+      <div class="hw-ok">✓ Primary dev hardware</div>
+    </div>
+    <div class="hw-card">
+      <div class="hw-gpu">AMD RX 550</div>
+      <div class="hw-vram">4 GB VRAM</div>
+      <div class="hw-ok">✓ Minimum viable config</div>
+    </div>
+    <div class="hw-card">
+      <div class="hw-gpu">AMD RX 580</div>
+      <div class="hw-vram">8 GB VRAM</div>
+      <div class="hw-ok">✓ Polaris — stable</div>
+    </div>
+    <div class="hw-card">
+      <div class="hw-gpu">NVIDIA GTX 1060</div>
+      <div class="hw-vram">6 GB VRAM</div>
+      <div class="hw-ok">✓ via cuda backend</div>
+    </div>
+  </div>
+
+  <div style="margin-top:32px;padding:20px 24px;background:var(--bg2);border:1px solid rgba(124,111,239,0.3);border-left:3px solid var(--purple)" class="reveal">
+    <p style="color:var(--gray);font-size:14px">
+      <strong style="color:var(--purple)">THOR Integration:</strong>
+      This module is the AI inference backbone of the
+      <a href="https://github.com/ivandiaztnd/thor-autorecon" style="color:var(--cyan)">THOR autorecon framework</a>.
+      Node Alpha drives real-time operator interaction and attack strategy.
+      Node Beta processes Nmap/Nuclei/OSINT outputs asynchronously.
+      Qdrant stores scan session memory for cross-phase context persistence.
+    </p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="f-logo">llm-asymmetric-router</div>
+  <p>Built by <a href="https://github.com/ivandiaztnd">@ivandiaztnd</a> — THOR Project · April 2026</p>
+  <p style="margin-top:8px">
+    <a href="https://github.com/ivandiaztnd/llm-asymmetric-router">GitHub</a> ·
+    <a href="docs/whitepaper.pdf">Whitepaper</a> ·
+    <a href="https://github.com/ivandiaztnd/thor-autorecon">THOR Framework</a> ·
+    GNU gpl v3 License
+  </p>
+</footer>
+
+<script>
+// Scroll reveal
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// Animated counters in stats
+function animateCount(el, target, suffix='', duration=1200) {
+  const start = performance.now();
+  const update = (now) => {
+    const p = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(ease * target) + suffix;
+    if (p < 1) requestAnimationFrame(update);
+  };
+  requestAnimationFrame(update);
+}
+</script>
+</body>
+</html>

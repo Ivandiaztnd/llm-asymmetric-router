@@ -1,0 +1,30 @@
+nodes:
+  alpha:
+    endpoint: "http://localhost:11434"
+    model: "gemma2:2b"
+    context_window: 2048
+    backend: "vulkan"        # vulkan | cuda | cpu
+    timeout: 120
+
+  beta:
+    endpoint: "http://localhost:11435"
+    model: "gemma2:2b"
+    context_window: 4096
+    backend: "cpu"
+    timeout: 300
+
+router:
+  vram_threshold: 0.90       # Force CPU route above this VRAM %
+  ttft_threshold_ms: 800     # Force CPU route if GPU TTFT exceeds this
+  fallback_node: "beta"
+
+qdrant:
+  enabled: true
+  host: "localhost"
+  port: 6333
+  collection: "llm_router_memory"
+
+chunking:
+  strategy: "semantic"       # semantic | fixed
+  max_chunk_tokens: 512
+  overlap_tokens: 64

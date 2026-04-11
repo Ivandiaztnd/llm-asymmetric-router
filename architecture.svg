@@ -1,0 +1,102 @@
+<svg viewBox="0 0 900 580" xmlns="http://www.w3.org/2000/svg" style="background:#0a0e1a;font-family:monospace">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0,8 3,0 6" fill="#00c8e0"/>
+    </marker>
+    <marker id="arr2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0,8 3,0 6" fill="#00e07a"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="450" y="36" text-anchor="middle" fill="#00c8e0" font-size="18" font-weight="bold" filter="url(#glow)">LLM Asymmetric Router — Architecture</text>
+  <text x="450" y="54" text-anchor="middle" fill="#607080" font-size="10">ivandiaztnd / THOR Project — 2026</text>
+  <line x1="80" y1="62" x2="820" y2="62" stroke="#00c8e0" stroke-width="0.5" opacity="0.4"/>
+
+  <!-- OPERATOR INPUT -->
+  <rect x="310" y="78" width="280" height="52" rx="8" fill="#0d1525" stroke="#00c8e0" stroke-width="1.5" filter="url(#glow)"/>
+  <text x="450" y="99" text-anchor="middle" fill="#00c8e0" font-size="12" font-weight="bold">OPERATOR PROMPT</text>
+  <text x="450" y="118" text-anchor="middle" fill="#a0aab4" font-size="9">Any text input / pentest task / log data</text>
+
+  <!-- Arrow down to router -->
+  <line x1="450" y1="130" x2="450" y2="168" stroke="#00c8e0" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ROUTER BOX -->
+  <rect x="240" y="170" width="420" height="110" rx="10" fill="#0d1a2e" stroke="#00c8e0" stroke-width="2" filter="url(#glow)"/>
+  <text x="450" y="193" text-anchor="middle" fill="#00c8e0" font-size="13" font-weight="bold">⚡ HEURISTIC ROUTER</text>
+  <line x1="260" y1="200" x2="640" y2="200" stroke="#00c8e0" stroke-width="0.5" opacity="0.4"/>
+
+  <!-- Stage 1 -->
+  <rect x="258" y="207" width="180" height="62" rx="6" fill="#111e35" stroke="#007a8a" stroke-width="1"/>
+  <text x="348" y="223" text-anchor="middle" fill="#00c8e0" font-size="10" font-weight="bold">Stage 1: Load Monitor</text>
+  <text x="348" y="238" text-anchor="middle" fill="#a0aab4" font-size="8.5">Poll VRAM utilisation</text>
+  <text x="348" y="251" text-anchor="middle" fill="#a0aab4" font-size="8.5">If VRAM &gt; 90% → force CPU</text>
+  <text x="348" y="264" text-anchor="middle" fill="#a0aab4" font-size="8.5">If TTFT &gt; 800ms → force CPU</text>
+
+  <!-- Stage 2 -->
+  <rect x="462" y="207" width="180" height="62" rx="6" fill="#111e35" stroke="#007a8a" stroke-width="1"/>
+  <text x="552" y="223" text-anchor="middle" fill="#00c8e0" font-size="10" font-weight="bold">Stage 2: Semantic Classifier</text>
+  <text x="552" y="238" text-anchor="middle" fill="#a0aab4" font-size="8.5">Pattern-match prompt tokens</text>
+  <text x="552" y="251" text-anchor="middle" fill="#a0aab4" font-size="8.5">LOG/SCAN → CPU node</text>
+  <text x="552" y="264" text-anchor="middle" fill="#a0aab4" font-size="8.5">EXPLOIT/QUESTION → GPU node</text>
+
+  <!-- Arrow stage1 → stage2 -->
+  <line x1="438" y1="238" x2="462" y2="238" stroke="#007a8a" stroke-width="1" marker-end="url(#arr)"/>
+
+  <!-- Arrows from router to nodes -->
+  <line x1="340" y1="280" x2="230" y2="358" stroke="#00c8e0" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="560" y1="280" x2="670" y2="358" stroke="#00e07a" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+  <!-- Label on arrows -->
+  <text x="258" y="322" fill="#00c8e0" font-size="8.5" transform="rotate(-28,258,322)">Interactive / Strategy</text>
+  <text x="572" y="308" fill="#00e07a" font-size="8.5" transform="rotate(28,572,308)">Logs / Batch / Large ctx</text>
+
+  <!-- NODE ALPHA -->
+  <rect x="60" y="360" width="260" height="130" rx="10" fill="#0d1a2e" stroke="#00c8e0" stroke-width="2" filter="url(#glow)"/>
+  <text x="190" y="381" text-anchor="middle" fill="#00c8e0" font-size="12" font-weight="bold">NODE ALPHA — GPU</text>
+  <line x1="78" y1="388" x2="302" y2="388" stroke="#00c8e0" stroke-width="0.5" opacity="0.4"/>
+  <text x="190" y="403" text-anchor="middle" fill="#a0aab4" font-size="8.5">Backend: Ollama + Vulkan</text>
+  <text x="190" y="417" text-anchor="middle" fill="#a0aab4" font-size="8.5">Port: 11434</text>
+  <text x="190" y="431" text-anchor="middle" fill="#a0aab4" font-size="8.5">Context: 2048 tokens</text>
+  <text x="190" y="445" text-anchor="middle" fill="#a0aab4" font-size="8.5">Model: Gemma 2:2b Q4_K_M</text>
+  <rect x="100" y="455" width="180" height="22" rx="4" fill="#001a10" stroke="#00e07a" stroke-width="0.8"/>
+  <text x="190" y="470" text-anchor="middle" fill="#00e07a" font-size="8">⚡ Low TTFT — Interactive</text>
+
+  <!-- NODE BETA -->
+  <rect x="580" y="360" width="260" height="130" rx="10" fill="#0d1a2e" stroke="#00e07a" stroke-width="2" filter="url(#glow)"/>
+  <text x="710" y="381" text-anchor="middle" fill="#00e07a" font-size="12" font-weight="bold">NODE BETA — CPU</text>
+  <line x1="598" y1="388" x2="822" y2="388" stroke="#00e07a" stroke-width="0.5" opacity="0.4"/>
+  <text x="710" y="403" text-anchor="middle" fill="#a0aab4" font-size="8.5">Backend: Ollama CPU (llama.cpp)</text>
+  <text x="710" y="417" text-anchor="middle" fill="#a0aab4" font-size="8.5">Port: 11435</text>
+  <text x="710" y="431" text-anchor="middle" fill="#a0aab4" font-size="8.5">Context: 4096+ tokens</text>
+  <text x="710" y="445" text-anchor="middle" fill="#a0aab4" font-size="8.5">Model: Gemma 2:2b Q4_K_M</text>
+  <rect x="618" y="455" width="184" height="22" rx="4" fill="#001a10" stroke="#00e07a" stroke-width="0.8"/>
+  <text x="710" y="470" text-anchor="middle" fill="#00e07a" font-size="8">🧠 High Context — Batch</text>
+
+  <!-- QDRANT -->
+  <rect x="360" y="400" width="180" height="90" rx="10" fill="#0d1a2e" stroke="#5050ff" stroke-width="1.5"/>
+  <text x="450" y="422" text-anchor="middle" fill="#8080ff" font-size="11" font-weight="bold">Qdrant VectorDB</text>
+  <line x1="374" y1="428" x2="526" y2="428" stroke="#5050ff" stroke-width="0.5" opacity="0.5"/>
+  <text x="450" y="442" text-anchor="middle" fill="#a0aab4" font-size="8.5">Port: 6333 (Rust-native)</text>
+  <text x="450" y="456" text-anchor="middle" fill="#a0aab4" font-size="8.5">Session memory / RAG</text>
+  <text x="450" y="470" text-anchor="middle" fill="#a0aab4" font-size="8.5">SmartChunk embeddings</text>
+
+  <!-- Beta → Qdrant -->
+  <line x1="620" y1="440" x2="540" y2="450" stroke="#5050ff" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+  <!-- Alpha → Qdrant -->
+  <line x1="320" y1="450" x2="360" y2="450" stroke="#5050ff" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+
+  <!-- SmartChunking label -->
+  <rect x="360" y="510" width="180" height="22" rx="4" fill="#0a0e1a" stroke="#5050ff" stroke-width="0.8"/>
+  <text x="450" y="525" text-anchor="middle" fill="#8080ff" font-size="8">SmartChunking: semantic boundaries</text>
+
+  <!-- Footer metrics -->
+  <line x1="80" y1="548" x2="820" y2="548" stroke="#00c8e0" stroke-width="0.5" opacity="0.3"/>
+  <text x="190" y="565" text-anchor="middle" fill="#607080" font-size="8">VRAM threshold: 90%</text>
+  <text x="450" y="565" text-anchor="middle" fill="#607080" font-size="8">TTFT threshold: 800ms | Routing overhead: &lt;1ms</text>
+  <text x="710" y="565" text-anchor="middle" fill="#607080" font-size="8">Fully offline — zero cloud dependency</text>
+</svg>
