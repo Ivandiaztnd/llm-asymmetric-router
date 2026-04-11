@@ -3,7 +3,7 @@
 > **Heterogeneous LLM inference with dynamic load balancing on edge hardware.**  
 > Run two LLM nodes in parallel — GPU for low-latency interaction, CPU for high-throughput batch — with a heuristic router that dispatches every prompt to the right node automatically.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-cyan.svg)](LICENSE)
+
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://python.org)
 [![Ollama](https://img.shields.io/badge/backend-Ollama-green.svg)](https://ollama.com)
 [![THOR Project](https://img.shields.io/badge/part_of-THOR_Project-orange.svg)](https://github.com/ivandiaztnd/thor-autorecon)
