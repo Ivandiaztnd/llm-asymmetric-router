@@ -255,5 +255,5 @@ Full technical documentation including performance benchmarks and design rationa
 
 ## License
 
-MIT — free to use, modify, and distribute.  
+GNU Gpl v3
 Built by [@ivandiaztnd](https://github.com/ivandiaztnd) — THOR Project, 2026.
